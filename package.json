@@ -1,0 +1,42 @@
+{
+  "name": "@innerlife/knowledge-guard",
+  "version": "0.1.0",
+  "description": "Configurable NPC knowledge-boundary guard for @innerlife/agent — declarative epistemic boundaries + runtime detection & prompt injection.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@innerlife/agent": ">=0.1.1"
+  },
+  "devDependencies": {
+    "@innerlife/agent": "file:../innerlife-agent",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
