@@ -1,10 +1,12 @@
 import type {
+  BlockedItem,
   ChatMessage,
   ConversationTurn,
   GuardCheckInput,
   KnowledgeBoundaryConfig,
 } from './types';
 import { renderKnownForPrompt } from './known-set';
+import { renderBlockedForPrompt } from './blocked-set';
 
 const HISTORICAL_RULES = [
   '1. 该时代及更早的事物 / 人物 / 概念 → 不标记',
@@ -61,6 +63,8 @@ export interface DetectorPromptOptions {
   hasHistory?: boolean;
   /** `> 0` ⇒ ask the detector to also predict out-of-bounds answers. */
   maxPredicted?: number;
+  /** Per-turn candidate forbidden topics. The detector must judge whether they apply. */
+  blocked?: BlockedItem[];
 }
 
 /** Build the detector's system prompt from the boundary config + per-turn known set. */
@@ -71,6 +75,7 @@ export function buildDetectorSystemPrompt(
 ): string {
   const rules = config.type === 'fictional' ? FICTIONAL_RULES : HISTORICAL_RULES;
   const maxPredicted = options.maxPredicted ?? 0;
+  const blockedPromptBlock = renderBlockedForPrompt(options.blocked ?? []);
 
   const sections: string[] = [
     '你是一个「认知边界审核器」。该 NPC 生活在如下世界设定中：',
@@ -103,6 +108,16 @@ export function buildDetectorSystemPrompt(
       .map((d) => `- ${d.topic}${d.reason ? `（${d.reason}）` : ''}`)
       .join('\n');
     sections.push(`以下事物即使看似属于该世界，也必须判定为越界（该 NPC 绝不可知）：\n${denyList}`);
+  }
+
+  if (blockedPromptBlock) {
+    sections.push(
+      [
+        '【本轮相关禁忌候选】以下内容由调用方按当前对话检索得到，可能与玩家意图相关，但不代表一定越界。',
+        '请结合【当前玩家消息】、【近期对话】与【已知豁免】判断：只有玩家确实触及这些内容，或 NPC 回答时可能提前使用这些内容时，才输出到 items / predicted。',
+        blockedPromptBlock,
+      ].join('\n'),
+    );
   }
 
   sections.push(
@@ -140,6 +155,7 @@ export function buildDetectorMessages(input: GuardCheckInput): ChatMessage[] {
   const system = buildDetectorSystemPrompt(input.config, knownBlock, {
     hasHistory,
     maxPredicted,
+    blocked: input.blocked,
   });
 
   // No history ⇒ keep the proven single-turn wording verbatim (backward-compatible).
