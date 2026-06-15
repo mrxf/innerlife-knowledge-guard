@@ -23,9 +23,9 @@ export interface RendererOptions {
 const DEFAULT_ALERT_TAG = 'knowledge_alert';
 const DEFAULT_BOUNDARY_TAG = 'knowledge_boundary';
 const DEFAULT_ALERT_DESCRIPTION =
-  '以下内容不属于你所处的世界，你从未见过也从未听说，绝不能表现出理解这些概念';
+  '以下事物不属于你所处的世界（晚于你的时代，或本就不存在于此）。若你对它们并无任何见闻或记忆，切勿凭空展露本不该拥有的认知；但若你的设定、记忆或当前对话确实让你接触过它们，则依你已有的理解，自然应对。';
 const DEFAULT_ANSWER_DESCRIPTION =
-  '你接下来的回答绝不能提及或引用以下事物，它们超出你的认知，应表现得对其一无所知';
+  '以下事物不属于你所处的世界（晚于你的时代，或本就不存在于此）。若你对它们并无任何见闻或记忆，切勿凭空展露本不该拥有的认知；但若你的设定、记忆或当前对话确实让你接触过它们，则依你已有的理解，自然应对。';
 const DEFAULT_INPUT_TAG = 'input';
 const DEFAULT_ANSWER_TAG = 'answer';
 

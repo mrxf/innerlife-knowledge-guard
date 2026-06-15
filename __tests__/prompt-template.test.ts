@@ -48,7 +48,9 @@ describe('buildDetectorSystemPrompt', () => {
   it('adds the answer look-ahead task and predicted output spec when maxPredicted > 0', () => {
     const prompt = buildDetectorSystemPrompt(config, '', { maxPredicted: 2 });
     expect(prompt).toContain('predicted');
-    expect(prompt).toContain('最多 2 个');
+    expect(prompt).toContain('至多 2 个');
+    // The look-ahead is framed as a "default empty" guardrail, not a quota to fill.
+    expect(prompt).toContain('默认为空');
   });
 });
 

@@ -36,12 +36,22 @@ const OUTPUT_SPEC = [
   '- 不存在越界项：{"items":[]}',
 ].join('\n');
 
-/** Extra task line asking the detector to look ahead at its own answer. */
+/**
+ * Extra task asking the detector to self-check its *own* upcoming answer.
+ *
+ * This is a guardrail, not a brainstorm: `predicted` must list ONLY the
+ * out-of-bounds things the NPC might blurt out, never the in-world words it
+ * would legitimately reach for. Framed as "default empty, flag only on real
+ * risk" so the model stops slot-filling the array up to `maxPredicted`.
+ */
 function answerLookaheadTask(maxPredicted: number): string {
-  return (
-    `此外，请设想你作为该 NPC 会如何回答【当前玩家消息】，` +
-    `列出最多 ${maxPredicted} 个你可能脱口而出、却超出认知边界的具体事物（人物 / 事件 / 物品等），放入 predicted；若没有则留空。`
-  );
+  return [
+    '此外，做一次「回答前自检」：预判你作为该 NPC 回答【当前玩家消息】时，是否可能不慎说出超出认知边界的事物。',
+    '这是一道安全防线，不是头脑风暴——predicted 默认应为空；只有当你确实预见到自己会脱口而出某个越界词时，才把它放入 predicted，至多 ' +
+      `${maxPredicted} 个，宁缺毋滥。`,
+    '关键区别：为了理解或回答而动用的本世界合法事物（例如用「书信」「信鸽」去类比一件你不认识的现代物件），它们本身并不越界，【绝不要】放入 predicted；只有当你可能顺着话头说出本世界并不存在的事物（如「信号」「充电」「快递」）时，才放入。',
+    'predicted 中每一项的 reason 必须说明「它为何越界」；任何你判断为「不越界 / 不算越界」的事物都不允许出现在 predicted 中。',
+  ].join('\n');
 }
 
 /** Output spec when answer look-ahead is on — two named arrays. */
@@ -49,7 +59,8 @@ function outputSpecWithPredicted(maxPredicted: number): string {
   return [
     '仅输出 JSON（不要包含任何解释或代码块标记），包含两个数组：',
     '- "items"：在【对话】中实际出现的越界事物（可为空）。',
-    `- "predicted"：你回答时可能脱口而出、但其实越界的事物，最多 ${maxPredicted} 个（可为空）。`,
+    `- "predicted"：回答前自检——你可能不慎说出、且确实越界的事物；【默认为空】，仅在确有风险时填写，至多 ${maxPredicted} 个。每项的 reason 必须说明它为何越界。`,
+    '多数情况下 predicted 应为空数组。',
     '示例：{"items":[{"value":"…","reason":"…"}],"predicted":[{"value":"…","reason":"…"}]}',
     '无任何越界：{"items":[],"predicted":[]}',
   ].join('\n');
