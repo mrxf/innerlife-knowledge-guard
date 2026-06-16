@@ -245,7 +245,12 @@ async function runDetection(
       history,
       maxPredicted,
     });
-    ctx.metadata[names.metadataKey] = result;
+    // Stash on agentContext.metadata — NOT ctx.metadata. The dynamic-alert slot
+    // reads from the compose context (`composer.composeMessages(agentContext, …)`),
+    // i.e. `ctx.agentContext.metadata`. `ctx.metadata` is the Runner's per-turn
+    // pipeline bag, a separate object the composer never sees, so writing there
+    // silently drops the alert.
+    ctx.agentContext.metadata[names.metadataKey] = result;
 
     emitGuardEvent(
       bus,
