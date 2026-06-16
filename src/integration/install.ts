@@ -12,6 +12,7 @@ import {
   type GatherKnownFn,
   type IncludeOptions,
 } from './gather-known';
+import { gatherBlockedFromContext, type GatherBlockedFn } from './gather-blocked';
 import { gatherHistoryFromContext, type GatherHistoryFn } from './gather-history';
 import { registerDynamicAlertSlot, registerStaticBoundarySlot } from './slots';
 import {
@@ -47,6 +48,12 @@ export interface InstallOptions {
   gatherKnown?: GatherKnownFn;
   /** Cap on known items fed to the detector (guards token budget). */
   maxKnownItems?: number;
+
+  // ── Dynamic blocked candidates ──
+  /** Extra caller-defined forbidden candidates; detector decides whether they apply. */
+  gatherBlocked?: GatherBlockedFn;
+  /** Cap on dynamic blocked candidates fed to the detector. */
+  maxBlockedItems?: number;
 
   // ── Multi-turn context ──
   /**
@@ -211,12 +218,16 @@ async function runDetection(
   const maxPredicted = options.answerGuard ? options.maxPredicted ?? DEFAULT_MAX_PREDICTED : 0;
 
   try {
-    const [known, history] = await Promise.all([
+    const [known, blocked, history] = await Promise.all([
       gatherKnownFromContext(ctx, {
         allow: options.config.allow,
         include: options.include,
         gatherKnown: options.gatherKnown,
         maxKnownItems: options.maxKnownItems,
+      }),
+      gatherBlockedFromContext(ctx, {
+        gatherBlocked: options.gatherBlocked,
+        maxBlockedItems: options.maxBlockedItems,
       }),
       gatherHistoryFromContext(ctx, {
         agent,
@@ -229,11 +240,12 @@ async function runDetection(
     const result = await guard.check({
       text,
       known,
+      blocked,
       config: options.config,
       history,
       maxPredicted,
     });
-    ctx.agentContext.metadata[names.metadataKey] = result;
+    ctx.metadata[names.metadataKey] = result;
 
     emitGuardEvent(
       bus,

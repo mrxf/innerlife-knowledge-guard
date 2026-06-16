@@ -22,6 +22,20 @@ export interface DenyItem {
   reason?: string;
 }
 
+/** A per-turn candidate topic the NPC may need to avoid knowing or predicting. */
+export interface BlockedItem {
+  /** Concept / topic name, e.g. "赤壁之战" or "诸葛亮在197年的状态". */
+  topic: string;
+  /** Optional time marker, rendered for detector reasoning only. */
+  time?: string;
+  /** Why this topic may be beyond the NPC's current horizon. */
+  reason?: string;
+  /** Optional response guidance, e.g. "do not use future titles". */
+  guidance?: string;
+  /** Optional source tag for tracing / prompt grouping by caller-owned systems. */
+  source?: string;
+}
+
 /** How the boundary is reasoned about; affects detector phrasing. */
 export type WorldType = 'historical' | 'fictional';
 
@@ -105,6 +119,8 @@ export interface GuardCheckInput {
   text: string;
   /** Pre-assembled "already known" set (allow + recalled worldbook/memory + custom). */
   known: KnownItem[];
+  /** Per-turn candidate forbidden topics; detector decides whether they apply. */
+  blocked?: BlockedItem[];
   /** The epistemic boundary to enforce. */
   config: KnowledgeBoundaryConfig;
   /**

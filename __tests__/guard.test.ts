@@ -74,4 +74,22 @@ describe('KnowledgeGuard.check', () => {
 
     expect(result.items).toEqual([{ value: '邓艾', reason: '三国后期', origin: 'predicted' }]);
   });
+
+  it('feeds blocked candidates into detector messages without marking them known', async () => {
+    const client = fakeClient('{"items":[]}');
+    const guard = new KnowledgeGuard({ client });
+
+    await guard.check({
+      text: '官渡后来如何',
+      known: [],
+      blocked: [{ topic: '官渡之战', time: '公元200年' }],
+      config,
+    });
+
+    const [system] = client.messages[0];
+    expect(system.content).toContain('【本轮相关禁忌候选】');
+    expect(system.content).toContain('官渡之战');
+    expect(system.content).toContain('【已知豁免】以下内容');
+    expect(system.content).toContain('（无）');
+  });
 });

@@ -52,6 +52,25 @@ describe('buildDetectorSystemPrompt', () => {
     // The look-ahead is framed as a "default empty" guardrail, not a quota to fill.
     expect(prompt).toContain('默认为空');
   });
+
+  it('renders dynamic blocked candidates as detector-only references', () => {
+    const prompt = buildDetectorSystemPrompt(config, '- 战棋规则', {
+      blocked: [
+        {
+          topic: '官渡之战',
+          time: '公元200年',
+          reason: '当前尚未发生',
+          guidance: '不能知道结果',
+        },
+      ],
+    });
+
+    expect(prompt).toContain('【本轮相关禁忌候选】');
+    expect(prompt).toContain('不代表一定越界');
+    expect(prompt).toContain('官渡之战');
+    expect(prompt).toContain('不能知道结果');
+    expect(prompt).toContain('【已知豁免】');
+  });
 });
 
 describe('buildDetectorMessages', () => {
@@ -101,5 +120,19 @@ describe('buildDetectorMessages', () => {
   it('asks for predicted answers when maxPredicted is set', () => {
     const messages = buildDetectorMessages({ text: '讲讲让他投降的人', known: [], config, maxPredicted: 3 });
     expect(messages[0].content).toContain('predicted');
+  });
+
+  it('passes blocked candidates to the system prompt only', () => {
+    const messages = buildDetectorMessages({
+      text: '官渡之后曹操是不是赢了',
+      known: [{ topic: '曹操' }],
+      blocked: [{ topic: '官渡之战', time: '公元200年' }],
+      config,
+    });
+
+    expect(messages[0].content).toContain('官渡之战');
+    expect(messages[0].content).toContain('曹操');
+    expect(messages[1].content).toContain('官渡之后曹操是不是赢了');
+    expect(messages[1].content).not.toContain('公元200年');
   });
 });
